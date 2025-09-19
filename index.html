@@ -57,11 +57,11 @@
     .lightbox img{max-width:92vw; max-height:86vh; border-radius:14px; border:1px solid var(--border)}
     .close{position:absolute; top:16px; right:20px; font-size:22px; cursor:pointer; padding:6px 10px; background:var(--glass); border:1px solid var(--border); border-radius:999px}
     /* Starfield canvas overlay */
-    #stars{position:fixed; inset:0; z-index:-1}
+    #bgfx{position:fixed; inset:0; z-index:-1; filter: saturate(120%);} 
   </style>
 </head>
 <body>
-  <canvas id="stars"></canvas>
+  <canvas id="bgfx"></canvas>
 
   <header class="nav">
     <div class="container navin">
@@ -257,37 +257,137 @@ print(len(nusc.sample))</div>
   </div>
 
   <script>
-    // ===== Fancy starfield background =====
-    const cvs = document.getElementById('stars');
-    const ctx = cvs.getContext('2d');
-    let W, H, stars = [];
-    function resize(){ W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
-    function initStars(){
-      const n = Math.min(220, Math.floor(W*H/12000));
-      stars = Array.from({length:n}, ()=>({
-        x: Math.random()*W,
-        y: Math.random()*H,
-        z: Math.random()*1+0.2,
-        r: Math.random()*1.2+0.2,
-        a: Math.random()*0.5+0.2
-      }));
-    }
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      for(const s of stars){
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(168,139,250,${s.a})`;
-        ctx.arc(s.x, s.y, s.r, 0, 2*Math.PI);
-        ctx.fill();
-        s.x += 0.04 * s.z; s.y += 0.02 * s.z; s.a += (Math.random()-0.5)*0.02;
-        if(s.x>W) s.x=0; if(s.y>H) s.y=0; if(s.a<0.1) s.a=0.1; if(s.a>0.7) s.a=0.7;
-      }
-      requestAnimationFrame(draw);
-    }
-    initStars(); draw();
+    // ===== Fancy nebula background (flow-field particles) =====
+(() => {
+  const cvs = document.getElementById('bgfx');
+  const ctx = cvs.getContext('2d');
+  let W, H, DPR = Math.min(2, window.devicePixelRatio || 1);
+  let t = 0; // time
 
-    // ===== Gallery loader =====
+  function resize(){
+    W = cvs.width = Math.floor(window.innerWidth * DPR);
+    H = cvs.height = Math.floor(window.innerHeight * DPR);
+    cvs.style.width = window.innerWidth + 'px';
+    cvs.style.height = window.innerHeight + 'px';
+    initParticles();
+  }
+  window.addEventListener('resize', resize);
+
+  // --- Simplex Noise (2D) ---
+  // Lightweight simplex noise implementation
+  class SimplexNoise{
+    constructor(seed=1337){
+      this.p = new Uint8Array(512);
+      const rand = (s)=>{ let x = Math.sin(s++)*1e4; return x - Math.floor(x); };
+      let perm = new Uint8Array(256);
+      for(let i=0;i<256;i++) perm[i]=i;
+      for(let i=255;i>0;i--){
+        const j = (seed = (seed*16807)%2147483647) % (i+1);
+        [perm[i], perm[j]] = [perm[j], perm[i]];
+      }
+      for(let i=0;i<512;i++) this.p[i]=perm[i&255];
+      this.grad3 = new Int8Array([
+        1,1,0, -1,1,0, 1,-1,0, -1,-1,0,
+        1,0,1, -1,0,1, 1,0,-1, -1,0,-1,
+        0,1,1, 0,-1,1, 0,1,-1, 0,-1,-1
+      ]);
+    }
+    noise2D(xin, yin){
+      const F2 = 0.5*(Math.sqrt(3)-1), G2 = (3-Math.sqrt(3))/6;
+      let n0=0,n1=0,n2=0;
+      let s = (xin+yin)*F2;
+      let i = Math.floor(xin+s); let j = Math.floor(yin+s);
+      let t = (i+j)*G2; let X0 = i - t, Y0 = j - t;
+      let x0 = xin - X0, y0 = yin - Y0;
+      let i1, j1; if(x0>y0){ i1=1; j1=0; } else { i1=0; j1=1; }
+      let x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
+      let x2 = x0 - 1 + 2*G2, y2 = y0 - 1 + 2*G2;
+      i &= 255; j &= 255;
+      const gi0 = this.p[i+this.p[j]]%12*3;
+      const gi1 = this.p[i+i1+this.p[j+j1]]%12*3;
+      const gi2 = this.p[i+1+this.p[j+1]]%12*3;
+      let t0 = 0.5 - x0*x0 - y0*y0; if(t0>0){ t0*=t0; n0 = t0*t0*(this.grad3[gi0]*x0 + this.grad3[gi0+1]*y0); }
+      let t1 = 0.5 - x1*x1 - y1*y1; if(t1>0){ t1*=t1; n1 = t1*t1*(this.grad3[gi1]*x1 + this.grad3[gi1+1]*y1); }
+      let t2 = 0.5 - x2*x2 - y2*y2; if(t2>0){ t2*=t2; n2 = t2*t2*(this.grad3[gi2]*x2 + this.grad3[gi2+1]*y2); }
+      return 70*(n0+n1+n2);
+    }
+  }
+
+  const noise = new SimplexNoise(20250919);
+
+  // --- Particles in a flow field ---
+  let particles = [];
+  function initParticles(){
+    const countBase = Math.floor((window.innerWidth*window.innerHeight)/4500);
+    const COUNT = Math.max(180, Math.min(900, countBase));
+    particles = Array.from({length: COUNT}, () => spawn());
+  }
+  function spawn(){
+    const speed = 0.6 + Math.random()*1.2;
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      vx: 0, vy: 0,
+      life: 0, max: 300 + Math.random()*300,
+      size: 0.6 + Math.random()*1.8,
+      hue: 200 + Math.random()*120 // cyan -> purple range
+    };
+  }
+
+  const mouse = {x:0, y:0, has:false};
+  window.addEventListener('mousemove', e=>{
+    mouse.x = e.clientX*DPR; mouse.y = e.clientY*DPR; mouse.has = true;
+  });
+
+  function step(){
+    // Fade trail
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(5,7,15,0.25)';
+    ctx.fillRect(0,0,W,H);
+
+    ctx.globalCompositeOperation = 'lighter';
+    for(let p of particles){
+      // Flow direction from noise
+      const nx = (p.x / 320) + t*0.0008;
+      const ny = (p.y / 320) + t*0.0008;
+      const ang = noise.noise2D(nx, ny) * Math.PI * 2; // [-1,1] -> angle
+      const ax = Math.cos(ang) * 0.6;
+      const ay = Math.sin(ang) * 0.6;
+
+      // Mouse subtle pull
+      if(mouse.has){
+        const dx = (mouse.x - p.x), dy = (mouse.y - p.y);
+        const dist = Math.hypot(dx,dy) + 1e-6;
+        const pull = Math.min(0.6, 60/(dist));
+        p.vx += (dx/dist)*pull*0.05; p.vy += (dy/dist)*pull*0.05;
+      }
+
+      p.vx += ax; p.vy += ay;
+      // damp
+      p.vx *= 0.92; p.vy *= 0.92;
+      p.x += p.vx; p.y += p.vy;
+
+      // Respawn if out or old
+      if(p.x<0||p.x>W||p.y<0||p.y>H || p.life++>p.max){ Object.assign(p, spawn()); }
+
+      // Draw glow trail point
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 18*DPR);
+      g.addColorStop(0, `hsla(${p.hue},100%,70%,.8)`);
+      g.addColorStop(1, 'hsla(0,0%,0%,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size*DPR, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    t += 16;
+    requestAnimationFrame(step);
+  }
+
+  resize();
+  requestAnimationFrame(step);
+})();
+
+// ===== Gallery loader =====
     // Expect a JSON file './omnimine_catalog.json' like:
     // { "images": ["assets/samples/0001.jpg", "assets/samples/0002.jpg", ... ] }
     async function loadGallery(){
