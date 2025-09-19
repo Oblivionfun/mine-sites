@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>我的 AI 着陆页</title>
+  <style>
+    :root { --bg:#0f172a; --fg:#e2e8f0; --muted:#94a3b8; --card:#111827; --accent:#38bdf8; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0b1024, #0f172a);}
+    a{color:inherit; text-decoration:none}
+    .container{max-width:1100px; margin:0 auto; padding:24px}
+    .nav{display:flex; justify-content:space-between; align-items:center; color:var(--fg)}
+    .brand{font-weight:700; letter-spacing:.3px}
+    .btn{display:inline-block; padding:12px 18px; border-radius:12px; background:var(--accent); color:#03202b; font-weight:700; transition:transform .15s ease, opacity .2s}
+    .btn:hover{transform:translateY(-1px); opacity:.95}
+    .hero{display:grid; gap:24px; align-items:center; padding:60px 0; color:var(--fg)}
+    @media(min-width:900px){ .hero{grid-template-columns:1.1fr .9fr} }
+    .title{font-size: clamp(28px, 6vw, 56px); line-height:1.08; margin:0}
+    .muted{color:var(--muted)}
+    .card{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:18px; padding:22px}
+    .grid{display:grid; gap:16px}
+    @media(min-width:900px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    .footer{color:var(--muted); text-align:center; padding:28px 0; font-size:14px}
+    input[type="email"]{width:100%; padding:14px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0b1224; color:var(--fg)}
+    .mini{font-size:12px; color:var(--muted)}
+    .badges{display:flex; gap:10px; flex-wrap:wrap}
+    .badge{padding:6px 10px; border-radius:999px; background:rgba(56,189,248,.12); color:#7dd3fc; font-size:12px; border:1px solid rgba(125,211,252,.25)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <div class="brand">AI Web</div>
+      <div class="badges">
+        <span class="badge">极速生成</span>
+        <span class="badge">移动优先</span>
+        <span class="badge">无需框架</span>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <h1 class="title">用 AI 10 分钟生成你的网页</h1>
+        <p class="muted">一句话描述，自动产出结构化页面与文案。适合展示产品、发布活动、收集线索。</p>
+        <div style="display:flex; gap:12px; margin:20px 0; flex-wrap:wrap">
+          <a class="btn" href="#features">了解功能</a>
+          <a class="btn" style="background:#a78bfa;color:#0b0e19" href="#signup">免费试用</a>
+        </div>
+        <div class="card" id="signup">
+          <form onsubmit="subscribe(event)">
+            <div style="display:grid; gap:12px; grid-template-columns:1fr auto">
+              <input type="email" placeholder="输入邮箱，获取内测资格" required />
+              <button class="btn" type="submit">订阅</button>
+            </div>
+            <div class="mini" id="msg" style="margin-top:8px">我们只会发送产品更新。</div>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <img alt="示意图" src="https://picsum.photos/800/520" style="width:100%; border-radius:12px" />
+        <p class="mini" style="margin-top:8px">上图为占位图，你可以换成自己的截图或海报。</p>
+      </div>
+    </section>
+
+    <section id="features" class="grid">
+      <div class="card">
+        <h3 style="margin:6px 0; color:#e5e7eb">结构化生成</h3>
+        <p class="muted">根据你的提示自动生成 Hero、功能亮点、评价与 CTA。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:6px 0; color:#e5e7eb">移动端优先</h3>
+        <p class="muted">无框架纯原生，加载快、适配好。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:6px 0; color:#e5e7eb">易于部署</h3>
+        <p class="muted">本地双击预览，一行命令即可上线。</p>
+      </div>
+    </section>
+
+    <footer class="footer">© 2025 My Site · 由 HTML/CSS/JS 驱动</footer>
+  </div>
+
+  <script>
+    function subscribe(e){
+      e.preventDefault();
+      const email = e.target.querySelector('input[type="email"]').value.trim();
+      const msg = document.getElementById('msg');
+      if(!email){ msg.textContent = '请填写邮箱。'; return; }
+      // 这里可换成你的后端接口
+      setTimeout(()=>{ msg.textContent = '订阅成功！感谢关注 🎉'; }, 400);
+    }
+  </script>
+</body>
+</html>
