@@ -3,92 +3,329 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>我的 AI 着陆页</title>
+  <title>OmniMine Dataset</title>
+  <meta name="description" content="OmniMine: Unstructured road scenes dataset for perception and fusion research. nuScenes-style format with camera, radar, LiDAR, and rich annotations."/>
+  <link rel="icon" href="./assets/favicon.png" />
   <style>
-    :root { --bg:#0f172a; --fg:#e2e8f0; --muted:#94a3b8; --card:#111827; --accent:#38bdf8; }
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0b1024, #0f172a);}
+    :root{
+      --bg:#05070f; --bg2:#0a0f2a; --card:rgba(255,255,255,.06); --glass:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.12); --fg:#e5e7eb; --muted:#9aa3b2; --brand:#22d3ee; --brand2:#a78bfa; --ok:#34d399; --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; color:var(--fg); background:radial-gradient(1200px 600px at 20% -10%, #0c1442 0%, transparent 60%),
+      radial-gradient(800px 400px at 100% 20%, #2b0f52 0%, transparent 60%), linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);}    
     a{color:inherit; text-decoration:none}
-    .container{max-width:1100px; margin:0 auto; padding:24px}
-    .nav{display:flex; justify-content:space-between; align-items:center; color:var(--fg)}
-    .brand{font-weight:700; letter-spacing:.3px}
-    .btn{display:inline-block; padding:12px 18px; border-radius:12px; background:var(--accent); color:#03202b; font-weight:700; transition:transform .15s ease, opacity .2s}
-    .btn:hover{transform:translateY(-1px); opacity:.95}
-    .hero{display:grid; gap:24px; align-items:center; padding:60px 0; color:var(--fg)}
-    @media(min-width:900px){ .hero{grid-template-columns:1.1fr .9fr} }
-    .title{font-size: clamp(28px, 6vw, 56px); line-height:1.08; margin:0}
-    .muted{color:var(--muted)}
-    .card{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:18px; padding:22px}
+    .container{max-width:1200px; margin:0 auto; padding:24px}
+    .nav{position:sticky; top:0; z-index:50; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(5,7,15,.75), rgba(5,7,15,.35)); border-bottom:1px solid var(--border)}
+    .navin{display:flex; gap:14px; align-items:center; justify-content:space-between; padding:12px 0}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.3px}
+    .brand img{width:28px; height:28px; border-radius:6px}
+    .nav a.link{opacity:.85}
+    .nav a.link:hover{opacity:1}
+    .nav .links{display:flex; gap:18px; align-items:center}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#081018; font-weight:800; border:1px solid rgba(255,255,255,.1); box-shadow: 0 10px 30px rgba(100,116,255,.25); transition: transform .15s ease, box-shadow .2s}
+    .btn:hover{transform: translateY(-1px); box-shadow: 0 18px 40px rgba(100,116,255,.32)}
+    .btn.ghost{background:transparent; color:var(--fg); border:1px solid var(--border); box-shadow:none}
+    .hero{position:relative; display:grid; gap:26px; padding:80px 0 40px}
+    @media(min-width:980px){ .hero{grid-template-columns:1.15fr .85fr; align-items:center} }
+    .title{font-size: clamp(30px, 6.4vw, 64px); line-height:1.04; margin:0}
+    .subtitle{color:var(--muted); max-width:62ch}
+    .badge{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:var(--glass); color:#a5f3fc; margin-bottom:12px}
+    .card{background:var(--glass); border:1px solid var(--border); border-radius:18px; padding:20px}
     .grid{display:grid; gap:16px}
-    @media(min-width:900px){ .grid{grid-template-columns:repeat(3,1fr)} }
-    .footer{color:var(--muted); text-align:center; padding:28px 0; font-size:14px}
-    input[type="email"]{width:100%; padding:14px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0b1224; color:var(--fg)}
+    @media(min-width:980px){ .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-2{grid-template-columns:repeat(2,1fr)} }
+    .stat{background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:16px; padding:16px}
+    .stat h3{margin:0; font-size:28px}
+    .stat p{margin:4px 0 0; color:var(--muted)}
+    .section{padding:40px 0}
+    .section h2{font-size: clamp(20px, 3vw, 36px); margin:0 0 8px}
+    .section .lead{color:var(--muted); margin:0 0 18px}
+    .gallery{display:grid; gap:10px; grid-template-columns:repeat(2,1fr)}
+    @media(min-width:800px){ .gallery{grid-template-columns:repeat(4,1fr)} }
+    .gallery img{width:100%; height:160px; object-fit:cover; border-radius:12px; border:1px solid var(--border); cursor:zoom-in}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap}
+    .kpi .chip{padding:8px 10px; border-radius:999px; border:1px solid var(--border); background:rgba(255,255,255,.05); font-size:12px; color:#c7d2fe}
+    .download-card{display:flex; flex-direction:column; gap:10px}
+    .code{background:#0a0f1a; border:1px solid var(--border); border-radius:12px; padding:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#cbd5e1; overflow:auto}
+    .table{width:100%; border-collapse: collapse}
+    .table th,.table td{border-bottom:1px dashed var(--border); padding:12px 10px; text-align:left}
+    .footer{color:var(--muted); text-align:center; padding:32px 0; border-top:1px solid var(--border)}
     .mini{font-size:12px; color:var(--muted)}
-    .badges{display:flex; gap:10px; flex-wrap:wrap}
-    .badge{padding:6px 10px; border-radius:999px; background:rgba(56,189,248,.12); color:#7dd3fc; font-size:12px; border:1px solid rgba(125,211,252,.25)}
+    /* Lightbox */
+    .lightbox{position:fixed; inset:0; background:rgba(2,6,23,.8); display:none; align-items:center; justify-content:center; z-index:60}
+    .lightbox img{max-width:92vw; max-height:86vh; border-radius:14px; border:1px solid var(--border)}
+    .close{position:absolute; top:16px; right:20px; font-size:22px; cursor:pointer; padding:6px 10px; background:var(--glass); border:1px solid var(--border); border-radius:999px}
+    /* Starfield canvas overlay */
+    #stars{position:fixed; inset:0; z-index:-1}
   </style>
 </head>
 <body>
-  <div class="container">
-    <nav class="nav">
-      <div class="brand">AI Web</div>
-      <div class="badges">
-        <span class="badge">极速生成</span>
-        <span class="badge">移动优先</span>
-        <span class="badge">无需框架</span>
-      </div>
-    </nav>
+  <canvas id="stars"></canvas>
 
-    <section class="hero">
+  <header class="nav">
+    <div class="container navin">
+      <div class="brand">
+        <img src="./assets/logo.png" alt="OmniMine"/>
+        <span>OmniMine</span>
+      </div>
+      <div class="links">
+        <a class="link" href="#about">About</a>
+        <a class="link" href="#stats">Stats</a>
+        <a class="link" href="#gallery">Gallery</a>
+        <a class="link" href="#download">Download</a>
+        <a class="link" href="#leaderboard">Leaderboard</a>
+        <a class="btn ghost" href="#docs">Docs</a>
+        <a class="btn" href="#download">Get the Data</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" id="about">
       <div>
-        <h1 class="title">用 AI 10 分钟生成你的网页</h1>
-        <p class="muted">一句话描述，自动产出结构化页面与文案。适合展示产品、发布活动、收集线索。</p>
-        <div style="display:flex; gap:12px; margin:20px 0; flex-wrap:wrap">
-          <a class="btn" href="#features">了解功能</a>
-          <a class="btn" style="background:#a78bfa;color:#0b0e19" href="#signup">免费试用</a>
+        <div class="badge">nuScenes-style · 多传感器 · 非结构化道路场景</div>
+        <h1 class="title">OmniMine Dataset</h1>
+        <p class="subtitle">专注矿区与非结构道路的感知研究数据集，采用与 nuScenes 一致的目录与标注格式，覆盖 <b>相机</b>、<b>雷达</b>、<b>LiDAR</b> 与 <b>地图要素</b>，适配主流 3D 检测/分割/跟踪与融合基线。</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin:18px 0 6px">
+          <a class="btn" href="#download">下载数据</a>
+          <a class="btn ghost" href="#citation">引用方式</a>
         </div>
-        <div class="card" id="signup">
-          <form onsubmit="subscribe(event)">
-            <div style="display:grid; gap:12px; grid-template-columns:1fr auto">
-              <input type="email" placeholder="输入邮箱，获取内测资格" required />
-              <button class="btn" type="submit">订阅</button>
+        <div class="kpi" style="margin-top:12px">
+          <span class="chip">开放许可：CC BY-NC 4.0</span>
+          <span class="chip">标注：3D盒/2D框/语义标签</span>
+          <span class="chip">时序：带 sweeps 与 ego 轨迹</span>
+        </div>
+      </div>
+      <div class="card">
+        <img src="./assets/hero_preview.jpg" alt="OmniMine preview" style="width:100%; border-radius:12px; border:1px solid var(--border)"/>
+        <p class="mini" style="margin-top:8px">占位图：请替换为你的数据集总览海报或视频封面。</p>
+      </div>
+    </section>
+
+    <section class="section" id="stats">
+      <h2>Dataset Stats</h2>
+      <p class="lead">核心规模指标与采样配置。以下数值为占位范例，请在 <code>site-config.json</code> 中替换。</p>
+      <div class="grid cols-3">
+        <div class="stat"><h3 id="stat-scenes">520</h3><p>scenes</p></div>
+        <div class="stat"><h3 id="stat-frames">1.2M</h3><p>frames</p></div>
+        <div class="stat"><h3 id="stat-hours">820h</h3><p>driving hours</p></div>
+        <div class="stat"><h3 id="stat-sensors">8</h3><p>sensor types</p></div>
+        <div class="stat"><h3 id="stat-classes">18</h3><p>classes</p></div>
+        <div class="stat"><h3 id="stat-geo">6</h3><p>mining sites</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="gallery">
+      <h2>Gallery</h2>
+      <p class="lead">随机浏览样例帧，支持点击放大。图片路径配置见 <code>omnimine_catalog.json</code>。</p>
+      <div class="gallery" id="galleryGrid">
+        <!-- thumbnails injected by JS from omnimine_catalog.json -->
+      </div>
+      <div class="mini" style="margin-top:8px">建议放置 12–24 张多场景样例，覆盖白天/夜晚、粉尘、复杂坡度等。</div>
+    </section>
+
+    <section class="section" id="download">
+      <h2>Download</h2>
+      <p class="lead">提供分包下载：<b>samples</b>、<b>sweeps</b>、<b>annotations</b>、<b>maps</b>。支持多源镜像与校验文件。</p>
+      <div class="grid cols-2">
+        <div class="card download-card">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+              <b>OmniMine v1.0-mini</b>
+              <div class="mini">快速体验（约 5 GB）</div>
             </div>
-            <div class="mini" id="msg" style="margin-top:8px">我们只会发送产品更新。</div>
-          </form>
+            <a class="btn" href="./downloads/omnimine_v1.0-mini.torrent">.torrent</a>
+          </div>
+          <div class="code">MD5: <span id="md5-mini">—</span></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-mini_samples.zip">samples</a>
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-mini_sweeps.zip">sweeps</a>
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-mini_annotations.json">annotations</a>
+          </div>
+        </div>
+        <div class="card download-card">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+              <b>OmniMine v1.0-trainval</b>
+              <div class="mini">完整数据（约 420 GB）</div>
+            </div>
+            <a class="btn" href="./downloads/omnimine_v1.0-trainval.torrent">.torrent</a>
+          </div>
+          <div class="code">MD5: <span id="md5-trainval">—</span></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-trainval_samples.zip">samples</a>
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-trainval_sweeps.zip">sweeps</a>
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-trainval_annotations.json">annotations</a>
+            <a class="btn ghost" href="./downloads/omnimine_v1.0-trainval_maps.zip">maps</a>
+          </div>
         </div>
       </div>
+      <details style="margin-top:14px">
+        <summary>校验与解压</summary>
+        <div class="code"># 验证 zip 完整性
+unzip -t omnimine_v1.0-trainval_samples.zip
+# 验证 MD5/SHA256
+md5sum -c omnimine_v1.0-trainval.md5
+sha256sum -c omnimine_v1.0-trainval.sha256
+# 合并分卷（如使用 .z01/.zip）
+zip -FF omnimine_part.zip --out omnimine_merged.zip && unzip -t omnimine_merged.zip</div>
+      </details>
+    </section>
+
+    <section class="section" id="docs">
+      <h2>Docs</h2>
+      <p class="lead">兼容 nuScenes 风格的数据结构与 API。以下为快速开始与类目对照。</p>
+      <div class="grid cols-2">
+        <div class="card">
+          <b>Quick Start</b>
+          <div class="code">pip install omnimine-devkit
+
+from omnimine_devkit import OmniMine
+nusc = OmniMine(version='v1.0-mini', dataroot='/path/to/omnimine', verbose=True)
+print(len(nusc.sample))</div>
+          <div class="mini">如已兼容官方 nuScenes devkit，仅需把类名替换为 <code>OmniMine</code>。</div>
+        </div>
+        <div class="card">
+          <b>Schema 对照</b>
+          <ul style="margin:10px 0 0; padding-left:16px; color:var(--muted)">
+            <li><code>sample</code> / <code>sample_data</code> / <code>sample_annotation</code></li>
+            <li><code>ego_pose</code> / <code>calibrated_sensor</code> / <code>sensor</code></li>
+            <li>地图：<code>map</code>（mine-road / dump / ramp / hazard zone）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mini" style="margin-top:10px">更多文档：<a href="./docs/index.html">./docs/index.html</a>（可用 Docsify / MkDocs 生成）。</div>
+    </section>
+
+    <section class="section" id="leaderboard">
+      <h2>Leaderboard（基线示例）</h2>
+      <p class="lead">提交评测文件后，系统按官方协议评估 mAP / NDS。以下为示例表。</p>
       <div class="card">
-        <img alt="示意图" src="https://picsum.photos/800/520" style="width:100%; border-radius:12px" />
-        <p class="mini" style="margin-top:8px">上图为占位图，你可以换成自己的截图或海报。</p>
+        <table class="table">
+          <thead>
+            <tr><th>Method</th><th>Modality</th><th>mAP</th><th>NDS</th><th>Paper/Code</th></tr>
+          </thead>
+          <tbody id="lbBody">
+            <tr><td>FUTR3D (baseline)</td><td>Cam+Radar</td><td>—</td><td>—</td><td><a href="#">link</a></td></tr>
+            <tr><td>BEVFusion</td><td>Cam+LiDAR</td><td>—</td><td>—</td><td><a href="#">link</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mini" style="margin-top:8px">欢迎通过 PR 提交结果，或邮件联系我们添加条目。</div>
+    </section>
+
+    <section class="section" id="citation">
+      <h2>引用 / Citation</h2>
+      <div class="card">
+        <div class="code">@dataset{omnimine2025,
+  title   = {OmniMine: Unstructured Road Scenes Dataset for Perception and Fusion},
+  author  = {Your Team},
+  year    = {2025},
+  url     = {https://&lt;username&gt;.github.io/&lt;repo&gt;/},
+  version = {v1.0}
+}</div>
+        <div class="mini">若有论文，请替换为论文 BibTeX；也可补充许可声明与条款链接。</div>
       </div>
     </section>
 
-    <section id="features" class="grid">
-      <div class="card">
-        <h3 style="margin:6px 0; color:#e5e7eb">结构化生成</h3>
-        <p class="muted">根据你的提示自动生成 Hero、功能亮点、评价与 CTA。</p>
-      </div>
-      <div class="card">
-        <h3 style="margin:6px 0; color:#e5e7eb">移动端优先</h3>
-        <p class="muted">无框架纯原生，加载快、适配好。</p>
-      </div>
-      <div class="card">
-        <h3 style="margin:6px 0; color:#e5e7eb">易于部署</h3>
-        <p class="muted">本地双击预览，一行命令即可上线。</p>
+    <section class="section" id="contact">
+      <h2>Contact</h2>
+      <div class="grid cols-2">
+        <div class="card">
+          <b>Maintainers</b>
+          <p class="mini">omnimine@yourlab.org · GitHub Issues 优先</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <a class="btn ghost" href="https://github.com/your-org/omnimine">GitHub</a>
+            <a class="btn ghost" href="mailto:omnimine@yourlab.org">Email</a>
+          </div>
+        </div>
+        <div class="card">
+          <b>Acknowledgements</b>
+          <p class="mini">感谢数据采集合作矿区、标注团队与开源社区（nuScenes/Waymo/KITTI 等）。</p>
+        </div>
       </div>
     </section>
 
-    <footer class="footer">© 2025 My Site · 由 HTML/CSS/JS 驱动</footer>
+    <footer class="footer">© 2025 OmniMine · Built for researchers • GitHub Pages</footer>
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <span class="close" onclick="hideLightbox()">✕</span>
+    <img id="lightboxImg" alt="preview" />
   </div>
 
   <script>
-    function subscribe(e){
-      e.preventDefault();
-      const email = e.target.querySelector('input[type="email"]').value.trim();
-      const msg = document.getElementById('msg');
-      if(!email){ msg.textContent = '请填写邮箱。'; return; }
-      // 这里可换成你的后端接口
-      setTimeout(()=>{ msg.textContent = '订阅成功！感谢关注 🎉'; }, 400);
+    // ===== Fancy starfield background =====
+    const cvs = document.getElementById('stars');
+    const ctx = cvs.getContext('2d');
+    let W, H, stars = [];
+    function resize(){ W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    function initStars(){
+      const n = Math.min(220, Math.floor(W*H/12000));
+      stars = Array.from({length:n}, ()=>({
+        x: Math.random()*W,
+        y: Math.random()*H,
+        z: Math.random()*1+0.2,
+        r: Math.random()*1.2+0.2,
+        a: Math.random()*0.5+0.2
+      }));
     }
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      for(const s of stars){
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(168,139,250,${s.a})`;
+        ctx.arc(s.x, s.y, s.r, 0, 2*Math.PI);
+        ctx.fill();
+        s.x += 0.04 * s.z; s.y += 0.02 * s.z; s.a += (Math.random()-0.5)*0.02;
+        if(s.x>W) s.x=0; if(s.y>H) s.y=0; if(s.a<0.1) s.a=0.1; if(s.a>0.7) s.a=0.7;
+      }
+      requestAnimationFrame(draw);
+    }
+    initStars(); draw();
+
+    // ===== Gallery loader =====
+    // Expect a JSON file './omnimine_catalog.json' like:
+    // { "images": ["assets/samples/0001.jpg", "assets/samples/0002.jpg", ... ] }
+    async function loadGallery(){
+      try{
+        const res = await fetch('./omnimine_catalog.json');
+        if(!res.ok) throw new Error('catalog not found');
+        const data = await res.json();
+        const grid = document.getElementById('galleryGrid');
+        grid.innerHTML = '';
+        (data.images||[]).slice(0,24).forEach(src=>{
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.src = src; img.alt = 'sample';
+          img.onclick = ()=>showLightbox(src);
+          grid.appendChild(img);
+        });
+      }catch(err){
+        console.warn('Gallery load failed', err);
+        const grid = document.getElementById('galleryGrid');
+        grid.innerHTML = '<div class="mini">未找到 <code>omnimine_catalog.json</code>，请按注释创建。</div>';
+      }
+    }
+    loadGallery();
+
+    // ===== Lightbox =====
+    function showLightbox(src){
+      const box = document.getElementById('lightbox');
+      document.getElementById('lightboxImg').src = src;
+      box.style.display = 'flex';
+    }
+    function hideLightbox(){ document.getElementById('lightbox').style.display = 'none'; }
+
+    // ===== Load MD5 from JSON (optional) =====
+    // create a file downloads/checksums.json : { "v1.0-mini":"...", "v1.0-trainval":"..." }
+    fetch('./downloads/checksums.json').then(r=>r.json()).then(j=>{
+      if(j['v1.0-mini']) document.getElementById('md5-mini').textContent = j['v1.0-mini'];
+      if(j['v1.0-trainval']) document.getElementById('md5-trainval').textContent = j['v1.0-trainval'];
+    }).catch(()=>{});
   </script>
 </body>
 </html>
